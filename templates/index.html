@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detection System | NLP & Machine Learning</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-newspaper"></i>
+                </div>
+                <div>
+                    <h1>Fake News Detector</h1>
+                    <p class="brand-subtitle">NLP & Machine Learning Text Verification System</p>
+                </div>
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-btn active" data-tab="detector-tab">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i> News Detector
+                </button>
+                <button class="nav-btn" data-tab="dashboard-tab" id="nav-dashboard-btn">
+                    <i class="fa-solid fa-chart-pie"></i> Analytics Dashboard
+                </button>
+                <button class="nav-btn" data-tab="about-tab">
+                    <i class="fa-solid fa-circle-info"></i> How It Works
+                </button>
+            </nav>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- TAB 1: NEWS DETECTOR -->
+            <section id="detector-tab" class="tab-pane active">
+                
+                <!-- Disclaimer Banner -->
+                <div class="disclaimer-banner">
+                    <div class="disclaimer-icon">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="disclaimer-text">
+                        <strong>Educational ML Disclaimer:</strong> This application uses a statistical Machine Learning model (TF-IDF + Logistic Regression) trained on textual patterns. It is designed for educational purposes only and should not be used as an absolute factual verification service or truth claim.
+                    </div>
+                </div>
+
+                <div class="grid-2col">
+                    <!-- Left Column: Input Form -->
+                    <div class="card input-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-pen-to-square"></i> Input News Content</h2>
+                            <span class="badge badge-info">Headline or Article</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="news-input">Enter News Headline or Full Article Text:</label>
+                            <textarea id="news-input" placeholder="Paste news article content or headline here for NLP analysis..." rows="8"></textarea>
+                            <div class="textarea-footer">
+                                <span class="counter-badge" id="char-count">0 characters</span>
+                                <span class="counter-badge" id="word-count">0 words</span>
+                            </div>
+                        </div>
+
+                        <!-- Sample Articles Section -->
+                        <div class="samples-section">
+                            <label class="samples-label"><i class="fa-solid fa-vial"></i> Quick Test Samples (Click to load):</label>
+                            <div class="samples-grid">
+                                <button class="sample-chip chip-real" data-type="real" data-index="0">
+                                    <i class="fa-solid fa-circle-check"></i> Real: NASA Exoplanet Study
+                                </button>
+                                <button class="sample-chip chip-real" data-type="real" data-index="1">
+                                    <i class="fa-solid fa-circle-check"></i> Real: Federal Reserve Rates
+                                </button>
+                                <button class="sample-chip chip-fake" data-type="fake" data-index="0">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Fake: Alien Base Whistleblower
+                                </button>
+                                <button class="sample-chip chip-fake" data-type="fake" data-index="1">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Fake: Miracle Cure Water
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Action Controls -->
+                        <div class="button-group">
+                            <button id="analyze-btn" class="btn btn-primary">
+                                <i class="fa-solid fa-robot"></i> Analyze News
+                            </button>
+                            <button id="reset-btn" class="btn btn-secondary">
+                                <i class="fa-solid fa-rotate-left"></i> Clear / Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Results & Statistics -->
+                    <div class="card results-card" id="results-card">
+                        
+                        <!-- Initial Placeholder -->
+                        <div class="empty-state" id="empty-state">
+                            <div class="empty-icon"><i class="fa-solid fa-microscope"></i></div>
+                            <h3>Awaiting Input</h3>
+                            <p>Enter a news headline or select a sample article above, then click <strong>Analyze News</strong> to view the NLP classification breakdown.</p>
+                        </div>
+
+                        <!-- Loading Spinner State -->
+                        <div class="loading-state hidden" id="loading-state">
+                            <div class="spinner"></div>
+                            <p class="loading-text">Processing text via NLP pipeline & TF-IDF Vectorizer...</p>
+                        </div>
+
+                        <!-- Active Prediction Output -->
+                        <div class="prediction-output hidden" id="prediction-output">
+                            <div class="result-header">
+                                <span class="result-label">ML Prediction Result</span>
+                                <span class="timestamp-badge" id="result-timestamp">Just now</span>
+                            </div>
+
+                            <!-- Verdict Card -->
+                            <div class="verdict-box" id="verdict-box">
+                                <div class="verdict-icon" id="verdict-icon">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </div>
+                                <div class="verdict-details">
+                                    <div class="verdict-title" id="verdict-title">LIKELY REAL</div>
+                                    <div class="verdict-sub" id="verdict-sub">High probability of genuine journalism patterns</div>
+                                </div>
+                            </div>
+
+                            <!-- Confidence Meter -->
+                            <div class="meter-section">
+                                <div class="meter-header">
+                                    <span>Model Confidence Score</span>
+                                    <strong id="confidence-percentage">95.4%</strong>
+                                </div>
+                                <div class="meter-bar-track">
+                                    <div class="meter-bar-fill" id="confidence-bar" style="width: 95.4%;"></div>
+                                </div>
+                                <div class="prob-split">
+                                    <span>Real Probability: <strong id="real-prob">95.4%</strong></span>
+                                    <span>Fake Probability: <strong id="fake-prob">4.6%</strong></span>
+                                </div>
+                            </div>
+
+                            <!-- Text Statistics Breakdown -->
+                            <div class="stats-container">
+                                <h3><i class="fa-solid fa-chart-simple"></i> Text Statistics Breakdown</h3>
+                                <div class="stats-grid">
+                                    <div class="stat-mini-card">
+                                        <span class="stat-val" id="stat-words">0</span>
+                                        <span class="stat-lbl">Total Words</span>
+                                    </div>
+                                    <div class="stat-mini-card">
+                                        <span class="stat-val" id="stat-chars">0</span>
+                                        <span class="stat-lbl">Total Chars</span>
+                                    </div>
+                                    <div class="stat-mini-card">
+                                        <span class="stat-val" id="stat-stopwords">0</span>
+                                        <span class="stat-lbl">Stopwords Filtered</span>
+                                    </div>
+                                    <div class="stat-mini-card">
+                                        <span class="stat-val" id="stat-unique">0</span>
+                                        <span class="stat-lbl">Unique Tokens</span>
+                                    </div>
+                                    <div class="stat-mini-card">
+                                        <span class="stat-val" id="stat-diversity">0%</span>
+                                        <span class="stat-lbl">Lexical Diversity</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preprocessed Tokens Preview -->
+                            <div class="tokens-section">
+                                <h3><i class="fa-solid fa-code"></i> NLP Stemmed Tokens (TF-IDF Input)</h3>
+                                <div class="tokens-box" id="tokens-box">
+                                    <!-- Tokens inserted dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: ANALYTICS DASHBOARD -->
+            <section id="dashboard-tab" class="tab-pane hidden">
+                <div class="dashboard-header-row">
+                    <div>
+                        <h2><i class="fa-solid fa-gauge-high"></i> System Analytics Dashboard</h2>
+                        <p class="section-desc">Historical prediction statistics stored in SQLite database</p>
+                    </div>
+                    <button id="refresh-stats-btn" class="btn btn-secondary btn-sm">
+                        <i class="fa-solid fa-arrows-rotate"></i> Refresh Data
+                    </button>
+                </div>
+
+                <!-- KPI Metric Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon icon-blue"><i class="fa-solid fa-file-contract"></i></div>
+                        <div class="kpi-body">
+                            <span class="kpi-value" id="kpi-total">0</span>
+                            <span class="kpi-label">Total Articles Analyzed</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon icon-emerald"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="kpi-body">
+                            <span class="kpi-value" id="kpi-real">0</span>
+                            <span class="kpi-label">Real Predictions (<span id="kpi-real-pct">0%</span>)</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon icon-rose"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="kpi-body">
+                            <span class="kpi-value" id="kpi-fake">0</span>
+                            <span class="kpi-label">Fake Predictions (<span id="kpi-fake-pct">0%</span>)</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon icon-purple"><i class="fa-solid fa-bullseye"></i></div>
+                        <div class="kpi-body">
+                            <span class="kpi-value" id="kpi-avg-conf">0%</span>
+                            <span class="kpi-label">Average Model Confidence</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-grid">
+                    <div class="card chart-card">
+                        <h3><i class="fa-solid fa-chart-pie"></i> Real vs Fake Distribution</h3>
+                        <div class="chart-container">
+                            <canvas id="ratioChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card chart-card">
+                        <h3><i class="fa-solid fa-chart-column"></i> Prediction Metrics & Breakdown</h3>
+                        <div class="chart-container">
+                            <canvas id="metricsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Table Card -->
+                <div class="card history-card">
+                    <div class="table-header-row">
+                        <h3><i class="fa-solid fa-clock-rotate-left"></i> Analysis History Log</h3>
+                        <div class="table-controls">
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="history-search" placeholder="Search history records...">
+                            </div>
+                            <button id="clear-history-btn" class="btn btn-danger btn-sm">
+                                <i class="fa-solid fa-trash-can"></i> Clear All History
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th># ID</th>
+                                    <th>Timestamp</th>
+                                    <th>Headline / Article Content</th>
+                                    <th>Verdict</th>
+                                    <th>Confidence</th>
+                                    <th>Word Count</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">Loading prediction history...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: ABOUT MODEL & NLP -->
+            <section id="about-tab" class="tab-pane hidden">
+                <div class="card about-card">
+                    <h2><i class="fa-solid fa-brain"></i> System Architecture & NLP Technical Details</h2>
+                    <p class="about-intro">This application implements an end-to-end Machine Learning and Natural Language Processing pipeline designed to classify textual news content as either <strong>REAL</strong> or <strong>FAKE</strong>.</p>
+
+                    <div class="architecture-steps">
+                        <div class="arch-step">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <h3>Text Preprocessing (NLTK)</h3>
+                                <p>Raw input text undergoes lowercasing, punctuation stripping, digit removal, NLTK stopword filtering, and Porter Stemming to reduce words to their linguistic roots.</p>
+                            </div>
+                        </div>
+
+                        <div class="arch-step">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <h3>TF-IDF Feature Extraction</h3>
+                                <p>Preprocessed tokens are transformed into a numerical feature matrix using Term Frequency-Inverse Document Frequency (TF-IDF) with unigrams & bigrams (n-gram range 1-2).</p>
+                            </div>
+                        </div>
+
+                        <div class="arch-step">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <h3>Logistic Regression Classification</h3>
+                                <p>A trained Logistic Regression classifier computes class boundary vectors and calibrated probabilities (via <code>predict_proba</code>) to yield exact percentage confidence scores.</p>
+                            </div>
+                        </div>
+
+                        <div class="arch-step">
+                            <div class="step-num">4</div>
+                            <div class="step-content">
+                                <h3>SQLite Persistence & Analytics</h3>
+                                <p>Predictions, metadata, and text metrics are logged in SQLite database tables, feeding the real-time Chart.js dashboard analytics.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="retrain-box">
+                        <h3><i class="fa-solid fa-gears"></i> Model Management CLI & Dataset Substitution</h3>
+                        <p>To substitute a larger CSV dataset (e.g., WELFake, ISOT, Kaggle Fake News):</p>
+                        <pre><code>python model/train_model.py --data path/to/your_dataset.csv</code></pre>
+                        <button id="retrain-btn" class="btn btn-secondary">
+                            <i class="fa-solid fa-arrows-rotate"></i> Retrain Model Now (Current Dataset)
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; Fake News Detection System Using NLP &bull; Built with Flask, NLTK, Scikit-Learn, SQLite & Chart.js</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
